@@ -224,6 +224,7 @@ After=network.target
 Environment=\"N8N_PROTOCOL=https\"
 Environment=\"N8N_SSL_CERT=/etc/ssl/n8n/certificate.pem\"
 Environment=\"N8N_SSL_KEY=/etc/ssl/n8n/private.key\"
+Environment=\"WEBHOOK_URL=https://159.112.183.169:5678\"
 Environment=\"PATH=/home/$INVOKER/.nvm/versions/node/v22.13.1/bin:/home/$INVOKER/.local/share/pnpm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
 ExecStart=/home/$INVOKER/.local/share/pnpm/n8n start
 Restart=always
@@ -263,6 +264,7 @@ fn_install_full(){
     echo "Aplicando configuraciones finales"
 
     sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 5678 -j ACCEPT
+    sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5678
     sudo netfilter-persistent save
 
     end_time=$(date +%s);

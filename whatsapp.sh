@@ -92,6 +92,11 @@ echo "  Licencia: GNU GPL v3"
 echo "  Encuentrame en redes como: @devitbash"
 echo "==================================="
 
+start_time=$(date +%s);
 fn_git_install
 fn_install_api
 fn_gtk_install
+elapsed_time=$(( (end_time - start_time) / 60 ));
+echo '';
+echo '';
+echo "La instalacion ha finalizado, tu servidor esta listo para usar y solo te tomo $elapsed_time minutos ;). La automatizacion es fantastica.";

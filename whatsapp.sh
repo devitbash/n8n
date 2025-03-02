@@ -64,34 +64,6 @@ show_progress() {
     echo "Completado!"
 }
 
-fn_pnpm_install(){
-    curl -fsSL https://get.pnpm.io/install.sh | sh -
-
-    export PNPM_HOME="$HOME/.local/share/pnpm"
-    export PATH="$PNPM_HOME:$PATH"
-    pnpm setup
-    export PATH="$PNPM_HOME:$PATH"
-
-    echo 'export NVM_DIR="$HOME/.nvm"' >> "$HOME/.bashrc"
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"' >> "$HOME/.bashrc"
-    echo '[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"' >> "$HOME/.bashrc"
-
-    echo 'export PNPM_HOME="$HOME/.local/share/pnpm"' >> "$HOME/.bashrc"
-    echo 'export PATH="$PNPM_HOME:$PATH"' >> "$HOME/.bashrc"
-
-    source $HOME/.bashrc
-
-    if [ $? -eq 0 ]; then
-        echo "Node version: " $(node -v)
-        echo "NVM version: " $(nvm current)
-        echo "PNPM version:" $(pnpm -v)
-        return 0
-    else
-        echo "No fue posible instalar Node."
-        exit 1;
-    fi
-}
-
 fn_git_install(){
     echo 'Instalando GIT Server...';
     sudo apt install git -y > /dev/null 2>&1 &
@@ -102,8 +74,8 @@ fn_install_api(){
     git clone https://github.com/chrishubert/whatsapp-api.git
     cd whatsapp-api
     cp .env.example .env
-    pnpm install
-    pnpm install body-parser
+    npm install
+    npm install body-parser
 }
 
 fn_gtk_install(){
@@ -120,7 +92,6 @@ echo "  Licencia: GNU GPL v3"
 echo "  Encuentrame en redes como: @devitbash"
 echo "==================================="
 
-fn_pnpm_install
 fn_git_install
 fn_install_api
 fn_gtk_install

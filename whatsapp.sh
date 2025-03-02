@@ -96,6 +96,7 @@ start_time=$(date +%s);
 fn_git_install
 fn_install_api
 fn_gtk_install
+end_time=$(date +%s);
 elapsed_time=$(( (end_time - start_time) / 60 ));
 echo '';
 echo '';

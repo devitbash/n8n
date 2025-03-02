@@ -101,6 +101,7 @@ fn_git_install(){
 fn_install_api(){
     git clone https://github.com/chrishubert/whatsapp-api.git
     cd whatsapp-api
+    cp .env.example .env
     pnpm install
     pnpm install body-parser
 }

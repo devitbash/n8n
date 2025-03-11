@@ -21,7 +21,7 @@
 
 NODE_VERSION=22;
 SSL_DIR='/etc/ssl/n8n';
-NGINX_SITES_ENABLED='/etc/nginx/sites-enabled/';
+LETS_ENC_LIVE_DIR='/etc/letsencrypt/live/';
 INVOKER=$(whoami | tr -d '\n');
 
 if [ -z $2 ]; then
@@ -33,7 +33,7 @@ else
     else
         EMAIL=$3;
     fi
-fi;
+fi
 
 show_progress() {
     sleep 1;
@@ -111,9 +111,10 @@ fn_node_install(){
         echo "Node version: " $(node -v)
         echo "NVM version: " $(nvm current)
         echo "PNPM version:" $(pnpm -v)
+        echo "Node instalado con éxito"
         return 0
     else
-        echo "No fue posible instalar Node."
+        echo "No fue posible instalar Node"
         exit 1;
     fi
 }
@@ -121,11 +122,13 @@ fn_node_install(){
 fn_db_install(){
     echo 'Instalando base de datos SQLite...';
     npm install sqlite3 --save
-}
-
-fn_nginx_install(){
-    sudo apt install -y nginx > /dev/null 2>&1 &
-    show_progress "apt" "Instalando Nginx Server...";
+    if [ $? -eq 0 ]; then
+        echo "sqlite3 instalado con éxito"
+        return 0
+    else
+        echo "No fue posible instalar Sqlite3"
+        exit 1;
+    fi
 }
 
 fn_server_install(){
@@ -133,12 +136,12 @@ fn_server_install(){
 
     NODE_VER=$(node --version | tr -d '\n');
 
-    if [ -d "/root/.nvm/versions/node/${NODE_VER}/lib/node_modules/n8n" ]; then
+    if [ -d "$HOME/.nvm/versions/node/${NODE_VER}/lib/node_modules/n8n" ]; then
         echo "La carpeta de la instalacion global de n8n ya existe."
         read -p "Desea eliminarla antes de continuar? (s/n): " respuesta </dev/tty
 
         if [[ "$respuesta" =~ ^[Ss]$ ]]; then
-            rm -rf "/root/.nvm/versions/node/${NODE_VER}/lib/node_modules/n8n" > /dev/null 2>&1 &
+            rm -rf "$HOME/.nvm/versions/node/${NODE_VER}/lib/node_modules/n8n" > /dev/null 2>&1 &
             show_progress "rm" "Eliminando carpeta...";
         else
             echo "No se puede continuar, por favor elimine el directorio de instalacion global de n8n"
@@ -147,75 +150,76 @@ fn_server_install(){
         fi
     fi
 
-    pnpm add -g n8n --verbose
+    pnpm add -g n8n;
+    if [ $? -eq 0 ]; then
+        echo "pnpm instalado con éxito"
+        return 0
+    else
+        echo "No fue posible instalar pnpm"
+        exit 1;
+    fi
 
 }
 
 fn_server_update(){
+    echo "Creando bakcup...";
+    tar -cvzf backup_$(date +"%Y%m%d%H%M%S").tar.gz $HOME/.n8n;
+    echo "Actualizando N8N...";
     pnpm update -g n8n;
+    if [ $? -eq 0 ]; then
+        echo "Se actualizó N8N"
+        return 0
+    else
+        echo "No fue posible actualizar N8N"
+        exit 1;
+    fi
 }
 
-fn_ssl_generate(){
+fn_autossl_generate(){
     sudo mkdir -p $SSL_DIR;
     sudo chmod 700 $SSL_DIR;
     sudo openssl genpkey -algorithm RSA -out ${SSL_DIR}/private.key;
     sudo openssl req -new -key ${SSL_DIR}/private.key -out ${SSL_DIR}/csr.pem -subj "/C=CO/ST=Estado/L=Ciudad/O=MiEmpresa/OU=MiUnidad/CN=mi-dominio.com";
     sudo openssl x509 -req -in ${SSL_DIR}/csr.pem -signkey ${SSL_DIR}/private.key -out ${SSL_DIR}/certificate.pem;
-    sudo chown $INVOKER:$INVOKER ${SSL_DIR}/csr.pem ${SSL_DIR}/certificate.pem
+    sudo chown $INVOKER ${SSL_DIR}/csr.pem ${SSL_DIR}/certificate.pem
     sudo chmod +x ${SSL_DIR}
     sudo chmod 640 ${SSL_DIR}/private.key
     sudo chmod 640 ${SSL_DIR}/csr.pem
     sudo chmod 644 ${SSL_DIR}/certificate.pem
 }
 
-fn_nginx_config(){
-    echo "Creando la configuracion del sitio para Nginx..."
-    if [ ! -f "/etc/nginx/sites-available/n8n" ]; then
-        echo "server {
-            listen 80;
-            server_name ${DOMAIN};
-
-            location / {
-                proxy_pass http://localhost:5678;
-                proxy_http_version 1.1;
-                chunked_transfer_encoding off;
-                proxy_buffering off;
-                proxy_cache off;
-                proxy_set_header Connection 'Upgrade';
-                proxy_set_header Upgrade \$http_upgrade;
-            }
-        }" | sudo tee /etc/nginx/sites-available/n8n > /dev/null;
-    else
-        echo "El sitio de n8n para Nginx ya existe";
-    fi
-    if [ $? -eq 0 ]; then
-        echo "Habilitando el sitio de n8n en Nginx...";
-        sudo ln -s /etc/nginx/sites-available/n8n /etc/nginx/sites-enabled/;
-        echo "Validando el archivo de configuracion del sitio...";
-        sudo nginx -t;
-        [ $? -eq 0 ] && return 0 || exit 1;
-    else
-        echo "No fue posible instalar Node."
-        exit 1;
-    fi
+fn_certbot_install(){
+    sudo apt install -y certbot > /dev/null 2>&1 &
+    show_progress "apt" "Installando Certbot...";
 }
 
-fn_certbot_install(){
-    sudo apt install -y certbot python3-certbot-nginx > /dev/null 2>&1 &
-    show_progress "apt" "Installando Certbot...";
-    if [ $? -eq 0 ]; then
-        echo "Generando certificado SSL..."
-        sudo certbot --nginx -d ${DOMAIN} --non-interactive --agree-tos --email ${EMAIL} --redirect;
-        return 0
-    else
-        echo "No fue posible generar el certificado SSL para el dominio ${DOMAIN}"
+fn_ssl_generate(){
+    if [ -z $DOMAIN ]; then
+        echo "El dominio es requerido y no fue pasado como parámetro";
         exit 1;
     fi
-    echo "Reiniciando servidor Nginx..."
-    sudo systemctl restart nginx
+
+    echo "Generando certificado SSL con Certbot..."
+    sudo certbot certonly --standalone -d $DOMAIN;
+}
+
+fn_ssl_install(){
+    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/certificate.pem $SSL_DIR/
+    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/private.key $SSL_DIR/
+    
+    if [ $? -eq 0 ]; then
+        echo "Certificados instalados"
+        echo "Reiniciando servidor Nginx..."
+        sudo systemctl restart nginx
+        return 0
+    else
+        echo "No fue posible mover los certificados SSL para el dominio ${DOMAIN}"
+        exit 1;
+    fi
 }
 
 fn_service_create(){
+    myip=$(curl -4 ifconfig.me)
     echo "[Unit]
 Description=n8n Workflow Automation
 After=network.target
@@ -224,12 +228,12 @@ After=network.target
 Environment=\"N8N_PROTOCOL=https\"
 Environment=\"N8N_SSL_CERT=/etc/ssl/n8n/certificate.pem\"
 Environment=\"N8N_SSL_KEY=/etc/ssl/n8n/private.key\"
-Environment=\"WEBHOOK_URL=https://159.112.183.169:5678\"
+Environment=\"WEBHOOK_URL=https://$myip:5678\"
 Environment=\"PATH=/home/$INVOKER/.nvm/versions/node/v22.13.1/bin:/home/$INVOKER/.local/share/pnpm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
 ExecStart=/home/$INVOKER/.local/share/pnpm/n8n start
 Restart=always
 User=$INVOKER
-Group=$INVOKER
+Group=root
 WorkingDirectory=/home/$INVOKER
 StandardOutput=syslog
 StandardError=syslog
@@ -237,6 +241,10 @@ SyslogIdentifier=$INVOKER
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/n8n.service > /dev/null;
+    echo "Servicio creado."
+    echo "Habilitando servicio..."
+    sudo systemctl daemon-reload;
+    sudo systemctl enable --now n8n;
 }
 
 fn_install_full(){
@@ -246,22 +254,20 @@ fn_install_full(){
     show_progress "apt" "Actualizando el sistema con apt...";
 
     fn_node_install;
-    [ $? -eq 0 ] && fn_db_install || { echo 'Error instalando node'; exit 1; }    
-    [ $? -eq 0 ] && fn_server_install || { echo 'Error instalando sqlite'; exit 1; }
+    fn_db_install;
+    fn_server_install;
 
     if [ ! -z $2 ]; then
-        fn_nginx_install
-        [ $? -eq 0 ] && fn_nginx_config || { echo 'Error instalando Nginx'; exit 1; }
-        [ $? -eq 0 ] && fn_certbot_install || { echo 'Error configurando nginx'; exit 1; }
-        [ $? -ne 0 ] && sudo systemctl restart nginx || { echo 'Error en certbot'; exit 1; }
+        fn_certbot_install;
+        fn_ssl_generate;
+        fn_ssl_install;
     else
-        [ $? -eq 0 ] && fn_ssl_generate || { echo 'Error instalando n8n'; exit 1; }
-        [ $? -ne 0 ] && { echo 'error generando certificados'; exit 1; }
-        fn_service_create
-        [ $? -eq 0 ] && { sudo systemctl daemon-reload; sudo systemctl enable --now n8n; } || { echo 'Error creando servicio'; exit 1; }
+        fn_autossl_generate;
     fi
+    
+    fn_service_create;
 
-    echo "Aplicando configuraciones finales"
+    echo "::: Aplicando configuraciones finales :::"
 
     sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 5678 -j ACCEPT
     sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5678
@@ -278,14 +284,14 @@ fn_install_full(){
 
 clear;
 echo "==================================="
-echo "  N8N Wizard v.0.0.1"
+echo "  N8N Wizard v.0.0.2"
 echo "  Creado por: DevItBash"
 echo "  Licencia: GNU GPL v3"
 echo "  Encuentrame en redes como: @devitbash"
 echo "==================================="
 
 case $1 in
-    install)
+    'install')
         fn_install_full;
         ;;
     'install-node')
@@ -295,14 +301,14 @@ case $1 in
         fn_db_install;
     ;;
     'ssl-self')
-        fn_ssl_generate;
+        fn_autossl_generate;
     ;;
     'service-create')
         fn_service_create
         [ $? -eq 0 ] && { echo 'Servicio creado'; sudo systemctl daemon-reload; sudo systemctl enable --now n8n; } || { echo 'Error creando servicio'; exit 1; }
         echo 'Para ver el estado del servicio: sudo systemctl status n8n';
     ;;
-    update)
+    'update')
         fn_server_update;
         ;;
     *)

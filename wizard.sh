@@ -25,7 +25,7 @@ LETS_ENC_LIVE_DIR='/etc/letsencrypt/live/';
 INVOKER=$(whoami | tr -d '\n');
 
 if [ -z $2 ]; then
-    DOMAIN='your-domain.com';
+    DOMAIN='localhost';
 else
     DOMAIN=$2;
     if [ -z $3 ]; then
@@ -219,16 +219,17 @@ fn_ssl_install(){
 }
 
 fn_service_create(){
-    myip=$(curl -4 ifconfig.me)
     echo "[Unit]
 Description=n8n Workflow Automation
 After=network.target
 
 [Service]
+Environment=\"N8N_HOST=0.0.0.0\"
+Environment=\"N8N_PORT=5678\"
 Environment=\"N8N_PROTOCOL=https\"
 Environment=\"N8N_SSL_CERT=/etc/ssl/n8n/certificate.pem\"
 Environment=\"N8N_SSL_KEY=/etc/ssl/n8n/private.key\"
-Environment=\"WEBHOOK_URL=https://$myip:5678\"
+Environment=\"WEBHOOK_URL=https://$DOMAIN:5678\"
 Environment=\"PATH=/home/$INVOKER/.nvm/versions/node/v22.13.1/bin:/home/$INVOKER/.local/share/pnpm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
 ExecStart=/home/$INVOKER/.local/share/pnpm/n8n start
 Restart=always

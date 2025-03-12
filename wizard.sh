@@ -300,12 +300,23 @@ case $1 in
     'install-sqlite')
         fn_db_install;
     ;;
+    'install-n8n')
+        fn_server_install;
+    ;;
     'ssl-self')
         fn_autossl_generate;
     ;;
+    'install-certbot')
+        fn_certbot_install;
+    ;;
+    'ssl-generate')
+        fn_ssl_generate;
+    ;;
+    'ssl-install')
+        fn_server_install;
+    ;;
     'service-create')
         fn_service_create
-        [ $? -eq 0 ] && { echo 'Servicio creado'; sudo systemctl daemon-reload; sudo systemctl enable --now n8n; } || { echo 'Error creando servicio'; exit 1; }
         echo 'Para ver el estado del servicio: sudo systemctl status n8n';
     ;;
     'update')

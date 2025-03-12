@@ -269,7 +269,7 @@ fn_install_full(){
 
     echo "::: Aplicando configuraciones finales :::"
 
-    sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 5678 -j ACCEPT
+    sudo iptables -I INPUT -m state --state NEW -p tcp --dport 5678 -j ACCEPT
     sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5678
     sudo netfilter-persistent save
 

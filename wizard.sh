@@ -204,8 +204,8 @@ fn_ssl_generate(){
 }
 
 fn_ssl_install(){
-    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/certificate.pem $SSL_DIR/
-    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/private.key $SSL_DIR/
+    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/cert.pem $SSL_DIR/certificate.pem
+    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/private.pem $SSL_DIR/private.key
     
     if [ $? -eq 0 ]; then
         echo "Certificados instalados"
@@ -224,12 +224,10 @@ Description=n8n Workflow Automation
 After=network.target
 
 [Service]
-Environment=\"N8N_HOST=0.0.0.0\"
-Environment=\"N8N_PORT=5678\"
 Environment=\"N8N_PROTOCOL=https\"
 Environment=\"N8N_SSL_CERT=/etc/ssl/n8n/certificate.pem\"
 Environment=\"N8N_SSL_KEY=/etc/ssl/n8n/private.key\"
-Environment=\"WEBHOOK_URL=https://$DOMAIN:5678\"
+Environment=\"WEBHOOK_URL=https://$DOMAIN\"
 Environment=\"PATH=/home/$INVOKER/.nvm/versions/node/v22.13.1/bin:/home/$INVOKER/.local/share/pnpm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
 ExecStart=/home/$INVOKER/.local/share/pnpm/n8n start
 Restart=always
@@ -332,7 +330,7 @@ case $1 in
         echo "  Backup    (aun no funciona, muy pronto disponible)"
         echo
         echo "Parameters:"
-        echo "  domain    Tu dominio, requerido para la generacion del ssl con cerbot"
+        echo "  domain    Tu dominio, requerido para la generacion del ssl con certbot"
         echo "  email     Tu email, requerido para la generacion del ssl con certbot"
         exit 0
     ;;

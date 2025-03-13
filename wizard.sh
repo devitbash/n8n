@@ -214,8 +214,6 @@ fn_ssl_install(){
     
     if [ $? -eq 0 ]; then
         echo "Certificados instalados"
-        echo "Reiniciando servidor Nginx..."
-        sudo systemctl restart nginx
         return 0
     else
         echo "No fue posible mover los certificados SSL para el dominio ${DOMAIN}"

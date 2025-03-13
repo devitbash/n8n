@@ -21,7 +21,7 @@
 
 NODE_VERSION=22;
 SSL_DIR='/etc/ssl/n8n';
-LETS_ENC_LIVE_DIR='/etc/letsencrypt/live/';
+LETS_ENC_LIVE_DIR='/etc/letsencrypt/live';
 INVOKER=$(whoami | tr -d '\n');
 
 if [ -z $2 ]; then
@@ -208,7 +208,7 @@ fn_ssl_install(){
         echo "El dominio es requerido y no fue pasado como parámetro";
         exit 1;
     fi
-    
+
     sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/cert.pem $SSL_DIR/certificate.pem
     sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/private.pem $SSL_DIR/private.key
     

@@ -204,6 +204,11 @@ fn_ssl_generate(){
 }
 
 fn_ssl_install(){
+    if [ -z $DOMAIN ]; then
+        echo "El dominio es requerido y no fue pasado como parámetro";
+        exit 1;
+    fi
+    
     sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/cert.pem $SSL_DIR/certificate.pem
     sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/private.pem $SSL_DIR/private.key
     

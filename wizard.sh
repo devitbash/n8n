@@ -200,7 +200,7 @@ fn_ssl_generate(){
     fi
 
     echo "Generando certificado SSL con Certbot..."
-    sudo certbot certonly --standalone -d $DOMAIN;
+    sudo certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos --email $EMAIL;
 }
 
 fn_ssl_install(){
@@ -243,7 +243,7 @@ WantedBy=multi-user.target" | sudo tee /etc/systemd/system/n8n.service > /dev/nu
     echo "Servicio creado."
     echo "Habilitando servicio..."
     sudo systemctl daemon-reload;
-    sudo systemctl enable --now n8n;
+    sudo systemctl enable n8n;
 }
 
 fn_install_full(){
@@ -266,6 +266,7 @@ fn_install_full(){
     
     fn_service_create;
 
+    source ~/.bashrc
     echo "::: Aplicando configuraciones finales :::"
 
     sudo iptables -I INPUT -m state --state NEW -p tcp --dport 5678 -j ACCEPT
@@ -278,7 +279,7 @@ fn_install_full(){
     echo '';
     echo '';
     echo "La instalacion ha finalizado, tu servidor esta listo para usar y solo te tomo $elapsed_time minutos ;). La automatizacion es fantastica.";
-    [ -z $2 ] && { echo 'Para ver el estado del servicio: sudo systemctl status n8n'; }
+    [ -z $2 ] && { echo 'Para iniciar el servicio use: sudo systemctl status n8n'; }
 }
 
 clear;

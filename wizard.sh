@@ -235,7 +235,7 @@ Environment=\"PATH=/home/$INVOKER/.nvm/versions/node/v22.13.1/bin:/home/$INVOKER
 ExecStart=/home/$INVOKER/.local/share/pnpm/n8n start
 Restart=always
 User=$INVOKER
-Group=root
+Group=sudo
 WorkingDirectory=/home/$INVOKER
 StandardOutput=syslog
 StandardError=syslog

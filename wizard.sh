@@ -121,7 +121,7 @@ fn_node_install(){
 
 fn_db_install(){
     echo 'Instalando base de datos SQLite...';
-    npm install sqlite3 --save
+    npm install -g sqlite3 --save
     if [ $? -eq 0 ]; then
         echo "sqlite3 instalado con éxito"
         return 0
@@ -274,6 +274,7 @@ fn_install_full(){
     fn_service_create;
 
     source ~/.bashrc
+    NODE_VER=$(node --version | tr -d '\n');
     echo "::: Aplicando configuraciones finales :::"
 
     sudo iptables -I INPUT -m state --state NEW -p tcp --dport 5678 -j ACCEPT
@@ -287,6 +288,11 @@ fn_install_full(){
     echo '';
     echo "La instalacion ha finalizado, tu servidor esta listo para usar y solo te tomo $elapsed_time minutos ;). La automatizacion es fantastica.";
     [ -z $2 ] && { echo 'Para iniciar el servicio use: sudo systemctl status n8n'; }
+}
+
+fn_patch_sqlite(){
+    #npm list -g sqlite3 --depth=0
+    cp -r /home/$INVOKER/.nvm/versions/node/$NODE_VER/lib/node_modules/sqlite3/build /home/$INVOKER/.local/share/pnpm/global/5/.pnpm/sqlite3\@5.1.7/node_modules/sqlite3/
 }
 
 clear;
@@ -325,6 +331,9 @@ case $1 in
     'service-create')
         fn_service_create
         echo 'Para ver el estado del servicio: sudo systemctl status n8n';
+    ;;
+    'patch-sqlite')
+        fn_patch_sqlite;
     ;;
     'update')
         fn_server_update;

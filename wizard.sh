@@ -313,7 +313,7 @@ case $1 in
         fn_ssl_generate;
     ;;
     'ssl-install')
-        fn_server_install;
+        fn_ssl_install;
     ;;
     'service-create')
         fn_service_create

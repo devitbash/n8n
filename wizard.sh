@@ -211,6 +211,9 @@ fn_ssl_install(){
 
     sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/cert.pem $SSL_DIR/certificate.pem
     sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/privkey.pem $SSL_DIR/private.key
+
+    sudo chown $INVOKER $SSL_DIR/certificate.pem
+    sudo chown $INVOKER $SSL_DIR/private.key
     
     if [ $? -eq 0 ]; then
         echo "Certificados instalados"

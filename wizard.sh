@@ -163,7 +163,7 @@ fn_server_install(){
 
 fn_server_update(){
     echo "Creando bakcup...";
-    tar -cvzf backup_$(date +"%Y%m%d%H%M%S").tar.gz $HOME/.n8n;
+    tar --exclude="$HOME/.n8n/nodes/node_modules" -cvzf backup_$(date +"%Y%m%d%H%M%S").tar.gz $HOME/.n8n;
     echo "Actualizando N8N...";
     pnpm update -g n8n;
     if [ $? -eq 0 ]; then

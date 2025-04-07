@@ -101,3 +101,8 @@ elapsed_time=$(( (end_time - start_time) / 60 ));
 echo '';
 echo '';
 echo "La instalacion ha finalizado, tu servidor esta listo para usar y solo te tomo $elapsed_time minutos ;). La automatizacion es fantastica.";
+
+#Si es en la misma máquina:
+#sudo iptables -t nat -A OUTPUT -d ${ip} -p tcp --dport 443 -j DNAT --to-destination 127.0.0.1:5678
+#sudo iptables -t nat -L OUTPUT -n --line-numbers
+#sudo iptables -t nat -D OUTPUT <número>

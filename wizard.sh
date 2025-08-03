@@ -89,28 +89,19 @@ fn_node_install(){
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
     [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
 
-    nvm install $NODE_VERSION
+    nvm install $NODE_VERSION;
+    sudo apt install npm -y;
 
-    curl -fsSL https://get.pnpm.io/install.sh | sh -
-
-    export PNPM_HOME="$HOME/.local/share/pnpm"
-    export PATH="$PNPM_HOME:$PATH"
-    pnpm setup
-    export PATH="$PNPM_HOME:$PATH"
-
-    echo 'export NVM_DIR="$HOME/.nvm"' >> "$HOME/.bashrc"
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"' >> "$HOME/.bashrc"
-    echo '[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"' >> "$HOME/.bashrc"
-
-    echo 'export PNPM_HOME="$HOME/.local/share/pnpm"' >> "$HOME/.bashrc"
-    echo 'export PATH="$PNPM_HOME:$PATH"' >> "$HOME/.bashrc"
+    echo 'export NVM_DIR="$HOME/.nvm"' >> "$HOME/.bashrc";
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"' >> "$HOME/.bashrc";
+    echo '[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"' >> "$HOME/.bashrc";
 
     source $HOME/.bashrc
 
     if [ $? -eq 0 ]; then
         echo "Node version: " $(node -v)
         echo "NVM version: " $(nvm current)
-        echo "PNPM version:" $(pnpm -v)
+        echo "NPM version:" $(npm -v)
         echo "Node instalado con éxito"
         return 0
     else
@@ -121,7 +112,7 @@ fn_node_install(){
 
 fn_db_install(){
     echo 'Instalando base de datos SQLite...';
-    npm install -g sqlite3 --save
+    npm install -g sqlite3
     if [ $? -eq 0 ]; then
         echo "sqlite3 instalado con éxito"
         return 0
@@ -150,9 +141,9 @@ fn_server_install(){
         fi
     fi
 
-    pnpm add -g n8n;
+    npm install n8n;
     if [ $? -eq 0 ]; then
-        echo "pnpm instalado con éxito"
+        echo "n8n instalado con éxito"
         return 0
     else
         echo "No fue posible instalar pnpm"
@@ -165,7 +156,7 @@ fn_server_update(){
     echo "Creando bakcup...";
     tar --exclude="$HOME/.n8n/nodes/node_modules" -cvzf backup_$(date +"%Y%m%d%H%M%S").tar.gz $HOME/.n8n;
     echo "Actualizando N8N...";
-    pnpm update -g n8n;
+    npm update -g n8n;
     if [ $? -eq 0 ]; then
         echo "Se actualizó N8N"
         return 0
@@ -209,18 +200,21 @@ fn_ssl_install(){
         exit 1;
     fi
 
-    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/cert.pem $SSL_DIR/certificate.pem
-    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/privkey.pem $SSL_DIR/private.key
-    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/fullchain.pem $SSL_DIR/fullchain.pem
+    sudo mkdir -p $SSL_DIR;
+    sudo chmod 700 $SSL_DIR;
 
-    sudo chown $INVOKER $SSL_DIR/certificate.pem
-    sudo chown $INVOKER $SSL_DIR/private.key
+    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/cert.pem $SSL_DIR/certificate.pem;
+    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/privkey.pem $SSL_DIR/private.key;
+    sudo cp -L $LETS_ENC_LIVE_DIR/$DOMAIN/fullchain.pem $SSL_DIR/fullchain.pem;
+
+    sudo chown $INVOKER $SSL_DIR/certificate.pem;
+    sudo chown $INVOKER $SSL_DIR/private.key;
     
     if [ $? -eq 0 ]; then
         echo "Certificados instalados"
         return 0
     else
-        echo "No fue posible mover los certificados SSL para el dominio ${DOMAIN}"
+        echo "No fue posible mover los certificados SSL para el dominio ${DOMAIN}";
         exit 1;
     fi
 }
@@ -233,11 +227,12 @@ After=network.target
 
 [Service]
 Environment=\"N8N_PROTOCOL=https\"
+Environment=\"N8N_RUNNERS_ENABLED=true\"
 Environment=\"N8N_SSL_CERT=/etc/ssl/n8n/certificate.pem\"
 Environment=\"N8N_SSL_KEY=/etc/ssl/n8n/private.key\"
 Environment=\"WEBHOOK_URL=https://$DOMAIN\"
-Environment=\"PATH=/home/$INVOKER/.nvm/versions/node/$NODE_VER/bin:/home/$INVOKER/.local/share/pnpm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
-ExecStart=/home/$INVOKER/.local/share/pnpm/n8n start
+Environment=\"PATH=/home/$INVOKER/.nvm/versions/node/$NODE_VER/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
+ExecStart=/home/$INVOKER/node_modules/.bin/n8n start
 Restart=always
 User=$INVOKER
 Group=sudo
@@ -278,9 +273,11 @@ fn_install_full(){
     NODE_VER=$(node --version | tr -d '\n');
     echo "::: Aplicando configuraciones finales :::"
 
-    sudo iptables -I INPUT -m state --state NEW -p tcp --dport 5678 -j ACCEPT
-    sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5678
-    sudo netfilter-persistent save
+    sudo apt install iptables -y;
+    sudo apt install netfilter-persistent iptables-persistent -y
+    sudo iptables -I INPUT -m state --state NEW -p tcp --dport 5678 -j ACCEPT;
+    sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 5678;
+    sudo netfilter-persistent save;
 
     end_time=$(date +%s);
 
@@ -331,11 +328,18 @@ case $1 in
     ;;
     'service-create')
         fn_service_create
-        echo 'Para ver el estado del servicio: sudo systemctl status n8n';
+        echo 'Para iniciar el servicio: sudo systemctl start n8n';
     ;;
     'patch-sqlite')
         fn_patch_sqlite;
     ;;
+    'post-install')
+        echo "Ejecutando post-install...";
+        sudo chown root:sudo $SSL_DIR;
+        sudo chmod 750 $SSL_DIR;
+        chmod 600 /home/$INVOKER/.n8n/config;
+        echo "Post-install completado.";
+        ;;
     'update')
         fn_server_update;
         ;;

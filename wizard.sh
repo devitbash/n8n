@@ -156,7 +156,7 @@ fn_server_update(){
     echo "Creando bakcup...";
     tar --exclude="$HOME/.n8n/nodes/node_modules" -cvzf backup_$(date +"%Y%m%d%H%M%S").tar.gz $HOME/.n8n;
     echo "Actualizando N8N...";
-    npm update -g n8n;
+    npm update n8n;
     if [ $? -eq 0 ]; then
         echo "Se actualizó N8N"
         return 0
